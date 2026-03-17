@@ -24,10 +24,6 @@ y_encoded = le.fit_transform(y)
 print("X_encoded shape:", X_encoded.shape)
 print("y_encoded shape:", y_encoded.shape)
 
-<<<<<<< HEAD
-print(df_sklearn)
-
-=======
 # 1) Del først i pool + test
 Xpool_all, Xtest, ypool_all, ytest = train_test_split(
     X_encoded,
@@ -61,4 +57,3 @@ print("Xtrain:", Xtrain.shape)
 print("ytrain:", ytrain.shape)
 print("Xpool:", Xpool.shape)
 print("ypool:", ypool.shape)
->>>>>>> cbd0aa83f14d0b9eeb89b909289d6e8870fa6c4b
