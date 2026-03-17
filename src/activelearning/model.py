@@ -1,14 +1,16 @@
+import os
+os.environ["FORCE_CUDA_DISABLE"] = "1"
 from torch import nn
 import torch
 import numpy as np
-from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils import resample
 from scipy.stats import entropy
 
 # Defining logisitc regression model
 class Model:
     def __init__(self):
-        self.model = LogisticRegression(C=1, max_iter=1000)
+        self.model = RandomForestClassifier(n_estimators=10, random_state=42)
     
     def fit(self, X, y):
         self.model.fit(X, y)
