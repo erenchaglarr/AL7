@@ -4,7 +4,6 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.linear_model import LogisticRegression
-from data import *
 from model import Model, random_sampling, uncertainty_sampling, qbc_sampling
 from data import Xpool_all, ypool_all, Xtest, ytest
 
@@ -62,20 +61,6 @@ def active_learning(Xpool, ypool, Xtest, ytest, strategy="random",
 # Main: Load data + kør AL
 if __name__ == "__main__":
     seed = 42
-<<<<<<< HEAD
-=======
-    np.random.seed(seed)
-
-    # Load mushroom dataset
-    df =  
-    y = LabelEncoder().fit_transform(df["class"].values)
-    X = pd.get_dummies(df.drop("class", axis=1)).values
-
-    # Split testset
-    Xpool, Xtest, ypool, ytest = train_test_split(X, y, test_size=0.2,
-                                                  stratify=y, random_state=seed)
-
->>>>>>> de1878f (.)
     n_init = 10
     addn = 5
     n_comm_list = [3, 5, 10]
