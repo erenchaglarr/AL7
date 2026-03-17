@@ -1,98 +1,98 @@
 from torch import nn
 import torch
+import numpy as np
+from sklearn.linear_model import LogisticRegression
+from sklearn.utils import resample
+from scipy.stats import entropy
 
-class Model(nn.Module):
-    """Just a dummy model to show how to structure your code"""
+# Defining logisitc regression model
+class Model:
     def __init__(self):
-        super().__init__()
-        self.layer = nn.Linear(1, 1)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.layer(x)
+        self.model = LogisticRegression(C=1, max_iter=1000)
+    
+    def fit(self, X, y):
+        self.model.fit(X, y)
+    
+    def predict(self, X):
+        return self.model.predict(X)
+    
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)
     
 
-# QBC
-from scipy.stats import entropy
-Xpool = np.concatenate(X[:14])[:, mask.ravel()]
-ypool = np.concatenate(y[:14])
-testacc_qbc=[]
-ncomm=10
-trainset=order[:ninit]
-Xtrain=np.take(Xpool,trainset,axis=0)
-ytrain=np.take(ypool,trainset,axis=0)
-poolidx=np.arange(len(Xpool),dtype=int)
-poolidx=np.setdiff1d(poolidx,trainset)
-for i in range(25):
+# DEFINING SAMPLING METHODS 
+
+# Random sampling 
+def random_sampling(Xtrain, ytrain, Xpool, ypool, addn):
+    # træk tilfældige samples fra pool
+    poolidx = np.arange(len(Xpool))
+    idx = np.random.choice(poolidx, size=min(addn, len(poolidx)), replace=False)
+    X_add = Xpool[idx]
+    y_add = ypool[idx]
+    # fjern fra pool
+    Xpool = np.delete(Xpool, idx, axis=0)
+    ypool = np.delete(ypool, idx, axis=0)
+    # returnér de nye træningsdata og opdateret pool
+    Xtrain = np.concatenate([Xtrain, X_add], axis=0)
+    ytrain = np.concatenate([ytrain, y_add], axis=0)
+    return Xtrain, ytrain, Xpool, ypool
+
+# Uncertainty sampling 
+def uncertainty_sampling(Xtrain, ytrain, Xpool, ypool, model, addn):
+
+    model.fit(Xtrain, ytrain)
+    
+    # evaluer probabilities på pool
+    probs = model.predict_proba(Xpool)
+    max_probs = np.max(probs, axis=1)
+    
+    # vælg least confident samples
+    least_conf_idx = np.argsort(max_probs)[:addn]
+    
+    Xtrain = np.concatenate([Xtrain, Xpool[least_conf_idx]], axis=0)
+    ytrain = np.concatenate([ytrain, ypool[least_conf_idx]], axis=0)
+    
+    Xpool = np.delete(Xpool, least_conf_idx, axis=0)
+    ypool = np.delete(ypool, least_conf_idx, axis=0)
+    
+    return Xtrain, ytrain, Xpool, ypool
+
+def qbc_sampling(Xtrain, ytrain, Xpool, ypool, addn, n_comm=10, seed=42):
+    np.random.seed(seed)
+    
+    # 1. Kør committee members
     model_preds = []
-    for j in range(ncomm):
-        boot_x, boot_y = sklearn.utils.resample(Xtrain, ytrain, stratify=ytrain)
-        model = lin.LogisticRegression(C=1, max_iter=1000)
+    for j in range(n_comm):
+        boot_x, boot_y = resample(Xtrain, ytrain, stratify=ytrain, random_state=seed+j)
+        model = LogisticRegression(C=1, max_iter=1000)
         model.fit(boot_x, boot_y)
         preds = model.predict(Xpool)
         model_preds.append(preds)
     
     model_preds = np.array(model_preds)
+    
+    # 2. Beregn vote entropy
     vote_entropy = []
-
-    for k in range(model_preds.shape[1]): 
-        votes = model_preds[:, k] 
-        
-        counts = np.bincount(votes) 
-        probs = counts / counts.sum()  
-        
+    for k in range(model_preds.shape[1]):
+        counts = np.bincount(model_preds[:, k])
+        probs = counts / counts.sum()
         vote_entropy.append(entropy(probs))
-        
+    
     vote_entropy = np.array(vote_entropy)
-    # choose most uncertain samples
+    
+    # 3. Vælg mest uafklarede samples
     q_idx = np.argsort(-vote_entropy)[:addn]
-
-    # evaluate model on test set
-    model = lin.LogisticRegression(C=1, max_iter=1000)
-    model.fit(Xtrain, ytrain)
-
-    ypred = model.predict(Xtest)
-    acc = np.mean(ypred == ytest)
-
-    testacc_qbc.append((len(Xtrain), acc))
-
-    print('QBC, training samples:', len(Xtrain), 'accuracy:', acc)
-
-    # add selected samples to training set
+    
+    # 4. Tilføj til træning og fjern fra pool
     Xtrain = np.concatenate([Xtrain, Xpool[q_idx]], axis=0)
     ytrain = np.concatenate([ytrain, ypool[q_idx]], axis=0)
-
-    # remove them from pool
+    
     Xpool = np.delete(Xpool, q_idx, axis=0)
     ypool = np.delete(ypool, q_idx, axis=0)
-
-# Uncertainty sampling 
-testacc_al=[]
-trainset=order[:ninit]
-Xtrain=np.take(Xpool,trainset,axis=0)
-ytrain=np.take(ypool,trainset,axis=0)
-poolidx=np.arange(len(Xpool),dtype=int)
-poolidx=np.setdiff1d(poolidx,trainset)
-for i in range(25):
-    model.fit(Xtrain, ytrain)
-
-    ypred = model.predict(Xtest)
-    acc = np.mean(ypred == ytest)
-    testacc_al.append((len(Xtrain), acc))
     
-    # Least confident sampling
-    probs = model.predict_proba(Xpool)
-    max_probs = np.max(probs, axis=1)
-    least_conf_idx = np.argsort(max_probs)[:addn]
-
-    Xtrain = np.concatenate([Xtrain, Xpool[least_conf_idx]], axis=0)
-    ytrain = np.concatenate([ytrain, ypool[least_conf_idx]], axis=0)
-
-    Xpool = np.delete(Xpool, least_conf_idx, axis=0)
-    ypool = np.delete(ypool, least_conf_idx, axis=0)
+    return Xtrain, ytrain, Xpool, ypool
 
 
 
 if __name__ == "__main__":
     model = Model()
-    x = torch.rand(1)
-    print(f"Output shape of model: {model(x).shape}")
