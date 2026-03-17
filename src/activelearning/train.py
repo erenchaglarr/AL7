@@ -89,6 +89,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from model import Model, random_sampling, uncertainty_sampling, qbc_sampling
 from data import Xpool_all, ypool_all, Xtest, ytest
+from visualize import plot_learning_curves
 
 # Active Learning loop
 def active_learning(Xpool, ypool, Xtest, ytest, strategy="random",
@@ -134,8 +135,10 @@ def active_learning(Xpool, ypool, Xtest, ytest, strategy="random",
         else:
             raise ValueError("Unknown strategy")
 
+
     # returnér kun sidste accuracy
-    return accs[-1]
+    return accs
+
 
 
 if __name__ == "__main__":
@@ -146,16 +149,21 @@ if __name__ == "__main__":
 
     # Random sampling
     acc_random = active_learning(Xpool_all.copy(), ypool_all.copy(), Xtest, ytest,
-                                 strategy="random", n_init=n_init, addn=addn)
-    print(f"Random sampling: acc = {acc_random:.3f}")
+                                strategy="random", n_init=n_init, addn=addn, seed=seed)
+    print(f"Random sampling: acc = {acc_random[-1]:.3f}")
 
     # Uncertainty sampling
     acc_us = active_learning(Xpool_all.copy(), ypool_all.copy(), Xtest, ytest,
-                             strategy="uncertainty", n_init=n_init, addn=addn)
-    print(f"Uncertainty sampling: acc = {acc_us:.3f}")
+                            strategy="uncertainty", n_init=n_init, addn=addn, seed=seed)
+    print(f"Uncertainty sampling: acc = {acc_us[-1]:.3f}")
 
-    # QBC med forskellig committee size
+    # QBC med forskellige committee sizes
+    acc_qbc_dict = {}
     for n_comm in n_comm_list:
-        acc_qbc = active_learning(Xpool_all.copy(), ypool_all.copy(), Xtest, ytest,
-                                  strategy="qbc", n_init=n_init, addn=addn, n_comm=n_comm)
-        print(f"QBC with {n_comm} committee members: acc = {acc_qbc:.3f}")
+        acc_qbc_dict[n_comm] = active_learning(
+            Xpool_all.copy(), ypool_all.copy(), Xtest, ytest,
+            strategy="qbc", n_init=n_init, addn=addn, n_comm=n_comm, seed=seed
+        )
+    for n_comm, acc in acc_qbc_dict.items():
+        print(f"QBC with {n_comm} committee members: acc = {acc[-1]:.3f}")
+    plot_learning_curves(acc_random, acc_us, acc_qbc_dict)
