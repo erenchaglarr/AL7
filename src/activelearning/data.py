@@ -31,7 +31,7 @@ y_encoded = le.fit_transform(y)
 Xpool_full, Xtest, ypool_full, ytest = train_test_split(
     X_encoded,
     y_encoded,
-    test_size=0.2,
+    test_size=0.05,
     random_state=42,
     stratify=y_encoded
 )
@@ -40,7 +40,7 @@ Xpool_full, Xtest, ypool_full, ytest = train_test_split(
 Xpool_all, _, ypool_all, _ = train_test_split(
     Xpool_full,
     ypool_full,
-    train_size=0.10,
+    train_size=0.2,
     random_state=42,
     stratify=ypool_full
 )

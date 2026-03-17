@@ -142,7 +142,7 @@ if __name__ == "__main__":
     seed = 42
     n_init = 10
     addn = 5
-    n_comm_list = [3, 5, 10]
+    n_comm_list = [3, 5, 10, 20]
 
     # Random sampling
     acc_random = active_learning(Xpool_all.copy(), ypool_all.copy(), Xtest, ytest,
