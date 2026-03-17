@@ -4,6 +4,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.linear_model import LogisticRegression
+from data import *
 from model import Model, random_sampling, uncertainty_sampling, qbc_sampling
 from data import Xpool_all, ypool_all, Xtest, ytest
 

@@ -66,7 +66,7 @@ def qbc_sampling(Xtrain, ytrain, Xpool, ypool, addn, n_comm=10, seed=42):
     model_preds = []
     for j in range(n_comm):
         boot_x, boot_y = resample(Xtrain, ytrain, stratify=ytrain, random_state=seed+j)
-        model = LogisticRegression(C=1, max_iter=1000)
+        model = Model()
         model.fit(boot_x, boot_y)
         preds = model.predict(Xpool)
         model_preds.append(preds)

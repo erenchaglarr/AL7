@@ -1,21 +1,27 @@
-from ucimlrepo import fetch_ucirepo
-import numpy as np
+from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OneHotEncoder, LabelEncoder
+from sklearn.preprocessing import LabelEncoder
+import pandas as pd
+import numpy as np
 
-# Hent datasæt
-mushroom = fetch_ucirepo(id=73)
+# Hent Adult / Census Income fra OpenML
+adult = fetch_openml(name="adult", version=2, as_frame=True)
 
-X = mushroom.data.features
-y = mushroom.data.targets.squeeze()
+X = adult.data.copy()
+y = adult.target.copy()
 
-# One-hot encode features
-try:
-    enc = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
-except TypeError:
-    enc = OneHotEncoder(handle_unknown="ignore", sparse=False)
+# Håndter missing values robust
+for col in X.columns:
+    if pd.api.types.is_categorical_dtype(X[col]):
+        X[col] = X[col].cat.add_categories(["missing"]).fillna("missing")
+    elif X[col].dtype == "object":
+        X[col] = X[col].fillna("missing")
+    else:
+        X[col] = X[col].fillna(X[col].median())
 
-X_encoded = enc.fit_transform(X)
+# One-hot encode alle kategoriske features
+X_encoded = pd.get_dummies(X, drop_first=False)
+X_encoded = X_encoded.astype(float).to_numpy()
 
 # Encode labels
 le = LabelEncoder()
@@ -30,7 +36,7 @@ Xpool_full, Xtest, ypool_full, ytest = train_test_split(
     stratify=y_encoded
 )
 
-# Brug kun 10% af poolen til active learning
+# Brug kun en mindre del af poolen til active learning
 Xpool_all, _, ypool_all, _ = train_test_split(
     Xpool_full,
     ypool_full,
