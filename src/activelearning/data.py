@@ -23,3 +23,4 @@ one_hot_df = pd.DataFrame(one_hot_encoder, columns=enc.get_feature_names_out(X.c
 df_sklearn = pd.concat([one_hot_df, y], axis=1)
 
 print(df_sklearn)
+
